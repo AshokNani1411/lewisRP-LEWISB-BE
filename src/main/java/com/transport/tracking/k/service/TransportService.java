@@ -1863,6 +1863,7 @@
             double totalWeight = 0.0;
             double totalVolume = 0.0;
             int totalDrops = 0;
+            int totalPickups = 0;
             int totalStops = validDocsForTotals.size();
 
             for (Map<String, Object> doc : validDocsForTotals) {
@@ -1870,8 +1871,14 @@
                 totalVolume += doc.get("volume") != null ? Double.parseDouble(doc.get("volume").toString()) : 0;
 //                totalCases += doc.get("noofCases") != null ? Double.parseDouble(doc.get("noofCases").toString()) : 0;
 //                totmainCases += doc.get("mainCases") != null ? (int) Math.round(Double.parseDouble(doc.get("mainCases").toString())) : 0;
-                String type = doc.get("doctype") != null ? doc.get("doctype").toString().toLowerCase() : "";
-                if ("drop".equals(type)) totalDrops++;
+                String type = doc.get("doctype") != null ? doc.get("doctype").toString() : "";
+//                if ("drop".equals(type)) totalDrops++;
+                if (!isPickupDocument(type)) {
+                    totalDrops++;
+                }
+                else {
+                    totalPickups++;
+                }
             }
 
             // Update tripVO totals (same fields as insertTrip)
@@ -1881,6 +1888,7 @@
 //            tripVO.setMainCases(String.valueOf(totmainCases));
             tripVO.setStops(totalStops);
             tripVO.setDrops(totalDrops);
+            tripVO.setPickups(totalPickups);
 
             // ensure tripVO.totalObject reflects the validated set
             if (LtripObj == null) LtripObj = new HashMap<>();
@@ -2208,9 +2216,10 @@
             double totalVolume = 0.0;
 //            double totalCases = 0.0;
 //            int totmainCases = 0;
-            int totalDrops = validDocs.size();
+//            int totalDrops = validDocs.size();
+            int totalDrops = 0;
+            int totalPickups = 0;
             int totalStops = validDocs.size();
-
 
             for (Map<String, Object> doc : validDocs) {
                 totalWeight += doc.get("netweight") != null ? Double.parseDouble(doc.get("netweight").toString()) : 0;
@@ -2226,6 +2235,8 @@
 
                 if (!isPickupDocument(type)) {
                     totalDrops++;
+                } else {
+                    totalPickups++;
                 }
             }
     // Update tripVO totals
