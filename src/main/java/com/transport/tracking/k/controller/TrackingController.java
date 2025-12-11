@@ -8,6 +8,7 @@ import com.transport.tracking.model.VehLiveTrack;
 import com.transport.tracking.model.Vehicle;
 import com.transport.tracking.response.AccessTokenVO;
 import com.transport.tracking.response.SiteVO;
+import com.transport.tracking.response.VehTrackListDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -36,9 +37,9 @@ public class TrackingController {
     }
 
     @GetMapping("/livevehbysite")
-    public List<VehLiveTrack> getVehicles(AccessTokenVO accessTokenVO, @RequestParam(name = "site", required = false) String site,
-                                       @RequestParam(name = "active", required = false) Boolean active){
-        return trackingService.listTransports(site, active);
+    public List<VehTrackListDto> getVehicles(AccessTokenVO accessTokenVO, @RequestParam(name = "site", required = false) String site,
+                                             @RequestParam(name = "active", required = false) Boolean active){
+        return trackingService.listTransports1(site, active);
     }
 
     @GetMapping("/livevehbysiteanddate")

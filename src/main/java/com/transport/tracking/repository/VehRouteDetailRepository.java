@@ -13,4 +13,6 @@ public interface VehRouteDetailRepository extends CrudRepository<VehRouteDetail,
     public List<VehRouteDetail> findAll();
 
     public List<VehRouteDetail> findByXnumpc(String vrcode);
+
+    List<VehRouteDetail> findByXnumpcIn(List<String> vrCodes);
 }

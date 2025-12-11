@@ -3,9 +3,12 @@ package com.transport.tracking.k.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.transport.tracking.model.DocReportTrack;
 import com.transport.tracking.model.VehLiveTrack;
+import com.transport.tracking.model.VehRouteDetail;
 import com.transport.tracking.repository.DocumentTrackingRepository;
+import com.transport.tracking.repository.VehRouteDetailRepository;
 import com.transport.tracking.repository.VehRouteRepository;
 import com.transport.tracking.repository.VehicleTrackingRepository;
+import com.transport.tracking.response.VehTrackListDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,10 +20,8 @@ import org.springframework.util.StringUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -37,6 +38,8 @@ public class TrackingService {
     @Autowired
     private VehRouteRepository vehRouteRepository;
     @Autowired
+    private VehRouteDetailRepository vehRouteDetailRepository;
+    @Autowired
     private NamedParameterJdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -48,13 +51,68 @@ public class TrackingService {
 
     @Value("${db.schema}")
     private String dbSchema;
-    //private String dbSchema = "tbs.TMSBURBAN";
 
     private static SimpleDateFormat tripFormat = new SimpleDateFormat("YYMMdd");
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
     private static final String TRIPS_CACHE = "trips";
+
+    public List<VehTrackListDto> listTransports1(String site, Boolean active) {
+        log.info("Transport service is loaded...");
+        List<VehLiveTrack> vehicleList = null;
+
+        if (!StringUtils.isEmpty(site)) {
+            vehicleList = vehicleTrackingRepository.findBySite(site);
+        } else {
+            vehicleList = new ArrayList<>();
+            Iterator<VehLiveTrack> iterator = vehicleTrackingRepository.findAll().iterator();
+            while (iterator.hasNext()) {
+                vehicleList.add(iterator.next());
+            }
+        }
+
+        if (vehicleList == null || vehicleList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2) collect distinct vrnums
+        List<String> vrnums = vehicleList.stream()
+                .map(VehLiveTrack::getVrnum)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 3) fetch all VehRouteDetail in one query
+        List<VehRouteDetail> allOrders = vrnums.isEmpty()
+                ? Collections.emptyList()
+                : vehRouteDetailRepository.findByXnumpcIn(vrnums);
+
+        // 4) group by vrCode (vrnum)
+        Map<String, List<VehRouteDetail>> ordersByVrnum = allOrders.stream()
+                .collect(Collectors.groupingBy(VehRouteDetail::getXnumpc));
+
+        // 5) map vehicle -> DTO
+        List<VehTrackListDto> vehicleDTOs = vehicleList.stream().map(v -> {
+            List<VehRouteDetail> matching = ordersByVrnum.getOrDefault(v.getVrnum(), Collections.emptyList());
+
+            VehTrackListDto dto = new VehTrackListDto();
+            dto.setVehicle(v.getVehicle());
+            dto.setRegplate(v.getRegplate());
+            dto.setVrnum(v.getVrnum());
+            dto.setLat(v.getLat());
+            dto.setLng(v.getLng());
+            dto.setSite(v.getSite());
+            dto.setCurrDate(v.getCurrDate());
+            dto.setDriver(v.getDriver());
+            dto.setTime(v.getTime());
+            dto.setOrders(matching);
+            return dto;
+        }).collect(Collectors.toList());
+
+        return vehicleDTOs;
+
+    }
 
     public List<VehLiveTrack> listTransports(String site, Boolean active) {
         log.info("Transport service is loaded...");

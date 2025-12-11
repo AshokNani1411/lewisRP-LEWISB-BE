@@ -18,12 +18,6 @@ public class GlobalCorsConfig {
                                 "https://localhost:3000",
                                 "http://localhost:8048",
                                 "http://localhost:8049",
-//                                "https://192.168.1.211:8048",
-//                                "https://192.168.1.211:8049",
-//                                "https://solutions.tema-systems.com:8048",
-//                                "https://solutions.tema-systems.com:8049",
-//                                "http://solutions.tema-systems.com:8048",
-//                                "http://solutions.tema-systems.com:8049"
                                 "http://tmssolutions.tema-systems.com:8049",
                                 "http://tmssolutions.tema-systems.com:8048",
                                 "https://tmssolutions.tema-systems.com:8049",
